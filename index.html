@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analog Clock</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: black;
+      display: flex;
+      flex-direction: column;                       
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      width: auto;
+      color: white; 
+      font-family: monospace;      
+    }  
+    .clock {
+      position: relative;
+      width: min(80vmin, 80vw);
+      height: auto;
+      aspect-ratio: 1/1;
+      border: 8px solid white;
+      border-radius: 50%;
+      background-color: black;
+    }
+    .number {
+      position: absolute;
+      color: white;
+      font-size: 8vmin;
+      font-family: monospace;
+      font-weight: bold;
+      text-align: center;
+      transform: translate(-50%, -50%);
+    }
+    .subnumber {
+      position: absolute;
+      color: #aaa;
+      font-size: 3vmin;
+      font-family: monospace;
+      font-weight: bold;
+      text-align: center;
+      transform: translate(-50%, -50%);
+    }
+    .secnumber {
+      position: absolute;
+      color: #ddd;
+      font-size: 2vmin;
+      font-family: monospace;
+      font-weight: bold;
+      text-align: center;
+      transform: translate(-50%, -50%);
+    }
+    .hand {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      transform-origin: bottom center;
+      background-color: white;
+      border-radius: 2px;
+    }
+    .hour {
+      width: 1.6%;
+      height: 35%;
+      background-color: white;
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+      border-radius: 1px;
+      z-index: 1;
+    }
+    .minute {
+      width: 1.2%;
+      height: 45%;
+      background-color: white;
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+      border-radius: 1px;
+      z-index: 2;
+    }
+    .second {
+      width: 0.7%;
+      height: 50%;
+      background-color: red;
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+      border-radius: 1px;
+      z-index: 3;
+    }
+    .center {
+      position: absolute;
+      width: 3vmin;
+      height: 3vmin;
+      background-color: white;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 4;
+    }
+    .date, .time {
+      position: absolute;
+      color: white;
+      font-family: monospace;
+      font-size: 2vmin;
+      background: #222;
+      padding: 0.2em 0.5em;
+      border: 1px solid #888;
+      border-radius: 4px;
+      z-index: 0;
+      user-select: none;
+    }
+    .date {
+      top: 50%;
+      left: 72%;
+      transform: translate(-50%, -50%);
+    }
+    .time {
+      top: 72%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .mark {
+      position: absolute;
+      background-color: white;
+      transform-origin: center center;
+    }
+    .hour-mark {
+      width: 2%;
+      height: 2%;
+      background-color: white;
+      border-radius: 50%;
+    }    
+    .minute-mark {
+      width: 6%;
+      height: 0.4%;
+      background-color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="clock">
+    <div class="hand hour" id="hour"></div>
+    <div class="hand minute" id="minute"></div>
+    <div class="hand second" id="second"></div>
+    <div class="center"></div>
+    <div class="date" id="date"></div>
+    <div class="time" id="time"></div>
+  </div>
+
+  <script>
+    const hourHand = document.getElementById("hour");
+    const minuteHand = document.getElementById("minute");
+    const secondHand = document.getElementById("second");
+    const dateDisplay = document.getElementById("date");
+    const timeDisplay = document.getElementById("time");
+    const clock = document.querySelector(".clock");
+
+    let animationMode = "continuous";
+    let intervalId = null;
+
+    for (let i = 13; i <= 24; i++) {
+      const subnumber = document.createElement("div");
+      subnumber.className = "subnumber";
+      subnumber.innerText = i;
+      const angle = (i - 3) * (Math.PI * 2) / 12;
+      const radius = 30;
+      subnumber.style.left = 50 + radius * Math.cos(angle) + "%";
+      subnumber.style.top = 50 + radius * Math.sin(angle) + "%";
+      clock.appendChild(subnumber);
+    }
+
+    for (let i = 1; i <= 12; i++) {
+      const number = document.createElement("div");
+      number.className = "number";
+      number.innerText = i;
+      const angle = (i - 3) * (Math.PI * 2) / 12;
+      const radius = 38;
+      number.style.left = 50 + radius * Math.cos(angle) + "%";
+      number.style.top = 50 + radius * Math.sin(angle) + "%";
+      clock.appendChild(number);
+    }
+
+    for (let i = 1; i <= 12; i++) {
+      const secnumber = document.createElement("div");
+      secnumber.className = "secnumber";
+      secnumber.innerText = i * 5;
+      const angle = (i - 3) * (Math.PI * 2) / 12;
+      const radius = 45;
+      secnumber.style.left = 50 + radius * Math.cos(angle) + "%";
+      secnumber.style.top = 50 + radius * Math.sin(angle) + "%";
+      clock.appendChild(secnumber);
+    } 
+
+    for (let i = 0; i < 60; i++) {
+      const mark = document.createElement("div");
+      let radius = 47;
+      mark.className = "mark";
+
+      if (i % 5 === 0) {
+        mark.classList.add("hour-mark");
+        radius = 48;
+      } else {
+        mark.classList.add("minute-mark");
+      }
+
+      const angle = (i * 6) * (Math.PI / 180);
+
+      const x = 50 + radius * Math.cos(angle);
+      const y = 50 + radius * Math.sin(angle);
+
+      mark.style.left = `${x}%`;
+      mark.style.top = `${y}%`;
+      mark.style.transform = `translate(-50%, -50%) rotate(${i * 6}deg)`;
+
+      clock.appendChild(mark);
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const ms = now.getMilliseconds();
+      const s = now.getSeconds() + ms / 1000;
+      const m = now.getMinutes() + s / 60;
+      const h = now.getHours() % 12 + m / 60;
+
+      hourHand.style.transform = `translate(-50%, 0) rotate(${h * 30}deg)`;
+      minuteHand.style.transform = `translate(-50%, 0) rotate(${m * 6}deg)`;
+      secondHand.style.transform = `translate(-50%, 0) rotate(${s * 6}deg)`;
+
+      dateDisplay.innerText = String(now.getDate()).padStart(2, "0");
+
+      const hours24 = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      timeDisplay.innerText = `${hours24}:${minutes}:${seconds}`;
+
+      if (animationMode === "continuous") {
+        requestAnimationFrame(updateClock);
+      }
+    }
+
+    function changeMode() {
+      clearInterval(intervalId); // Stop any previous interval
+
+      if (animationMode === "continuous") {
+        animationMode = "automatic";
+        intervalId = setInterval(updateClock, 125); //28.800 bph
+      } else if (animationMode === "automatic") {
+        animationMode = "quartz";
+        intervalId = setInterval(updateClock, 1000); // 3.600 bph - 1 second 
+      } else {
+        animationMode = "continuous";
+        updateClock(); // Initiate animation with requestAnimationFrame
+      }
+    }
+   
+    clock.addEventListener("click", changeMode);
+    updateClock();
+  </script>
+</body>
+</html>
